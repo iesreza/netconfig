@@ -1,7 +1,8 @@
 # netconfig
 Golang Network configuration reader
 read cross platform network configuration
-Currently Can read
+
+####Currently can read
 - InterfaceName
 - HardwareAddress
 - LocalIP
