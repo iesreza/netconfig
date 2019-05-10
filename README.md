@@ -2,7 +2,7 @@
 Golang Network configuration reader
 read cross platform network configuration
 
-####Currently can read
+###Currently can read
 - InterfaceName
 - HardwareAddress
 - LocalIP
