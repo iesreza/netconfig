@@ -1,6 +1,6 @@
 # netconfig
-Golang Network Configuration Reader
-Read Cross Platform Network Configuration
+Golang Network configuration reader
+read cross platform network configuration
 Currently Can read
 - InterfaceName
 - HardwareAddress
