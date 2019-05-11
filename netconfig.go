@@ -1,7 +1,6 @@
 package netconfig
 
 import (
-	"fmt"
 	"log"
 	"net"
 	"os/exec"
@@ -9,6 +8,7 @@ import (
 	"strings"
 )
 
+// Network is the interface which store network configuration data
 type Network struct {
 	LocalIP net.IP
 	DNS []string
@@ -20,6 +20,7 @@ type Network struct {
 	Interface net.Interface
 }
 
+// GetNetworkConfig create instance of network configuration.
 func GetNetworkConfig() *Network  {
 	network := Network{}
 
@@ -52,6 +53,7 @@ func GetNetworkConfig() *Network  {
 	return  &network
 }
 
+// getLinux read network data for linux
 func (network *Network) getLinux(){
 
 	out, err := exec.Command("/bin/ip","route","get","8.8.8.8").Output()
@@ -112,6 +114,7 @@ func (network *Network) getLinux(){
 
 }
 
+// String return network information as string
 func (network *Network) String() string{
 
 	res := "InterfaceName:"+network.InterfaceName+"\r\n"
@@ -125,6 +128,7 @@ func (network *Network) String() string{
 	return res
 }
 
+// getWindows read network data in windows
 func (network *Network) getWindows() {
 	out, err := exec.Command("ipconfig","/all").Output()
 	if err != nil {
@@ -143,6 +147,7 @@ func (network *Network) getWindows() {
 	}
 }
 
+// extractDotted extract data of ipconfig
 func extractDotted(lines []string,key string) []string  {
 	result := ""
 	found := false
