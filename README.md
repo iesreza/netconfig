@@ -17,7 +17,7 @@ package main
 
 import (
 	"fmt"
-	"netconfig"
+	"github.com/iesreza/netconfig"
 	"strings"
 )
 
