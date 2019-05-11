@@ -1,6 +1,7 @@
 package netconfig
 
 import (
+	"fmt"
 	"log"
 	"net"
 	"os/exec"
@@ -21,30 +22,28 @@ type Network struct {
 
 func GetNetworkConfig() *Network  {
 	network := Network{}
-	conn, err := net.Dial("udp", "8.8.8.8:80")
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer conn.Close()
-	network.LocalIP = conn.LocalAddr().(*net.UDPAddr).IP
 
-	interfaces, _ := net.Interfaces()
-	for _, interf := range interfaces {
+	if runtime.GOOS == "windows" {
+		conn, err := net.Dial("udp", "8.8.8.8:80")
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer conn.Close()
+		network.LocalIP = conn.LocalAddr().(*net.UDPAddr).IP
 
-		if addrs, err := interf.Addrs(); err == nil {
-			for _, addr := range addrs {
-				if strings.Contains(addr.String(), network.LocalIP.String()) {
-					network.InterfaceName = interf.Name
-					network.HardwareAddress = interf.HardwareAddr
-					network.Interface = interf
+		interfaces, _ := net.Interfaces()
+		for _, interf := range interfaces {
+
+			if addrs, err := interf.Addrs(); err == nil {
+				for _, addr := range addrs {
+					if strings.Contains(addr.String(), network.LocalIP.String()) {
+						network.InterfaceName = interf.Name
+						network.HardwareAddress = interf.HardwareAddr
+						network.Interface = interf
+					}
 				}
 			}
 		}
-	}
-
-
-
-	if runtime.GOOS == "windows" {
 		network.getWindows()
 	}else{
 		network.getLinux()
@@ -54,6 +53,62 @@ func GetNetworkConfig() *Network  {
 }
 
 func (network *Network) getLinux(){
+
+	out, err := exec.Command("/bin/ip","route","get","8.8.8.8").Output()
+
+	if err != nil {
+		log.Fatal(err)
+	}
+	parts := strings.Split(string(out)," ")
+	network.DefaultGateway = net.ParseIP(parts[2])
+	network.InterfaceName = parts[4]
+	network.LocalIP = net.ParseIP(parts[6])
+
+	interf,err := net.InterfaceByName(network.InterfaceName)
+	if err == nil {
+		network.HardwareAddress = interf.HardwareAddr
+	}
+
+	out, err = exec.Command("/sbin/ifconfig",network.InterfaceName).Output()
+	if err == nil {
+		lines := strings.Split(string(out), "\n")
+
+		if len(lines) > 1 {
+			network.SubnetMask = net.ParseIP(strings.Split(strings.TrimSpace(lines[1]), " ")[4])
+		}
+	}
+
+
+	out, err = exec.Command("grep","domain-name","/var/lib/dhcp/dhclient."+network.InterfaceName+".leases").Output()
+
+	if err == nil {
+		dnslist := ""
+		lines := strings.Split( strings.TrimSpace(string(out)),"\n")
+		for _,line := range lines{
+			if strings.Contains(line,"domain-name-servers"){
+				if len(line) > 26 {
+					line = strings.TrimRight(strings.TrimSpace(line)[26:], ";")
+					list := strings.Split(line, ",")
+					for _, dnsitem := range list {
+						if !strings.Contains(dnslist, dnsitem) {
+							dnslist += dnsitem + ","
+						}
+					}
+				}
+
+			}else {
+				if len(line) > 18 {
+					network.Suffix = strings.TrimSpace(strings.TrimRight(strings.TrimSpace(line)[18:], ";"))
+				}
+			}
+			dnslist = strings.TrimRight(dnslist,",")
+		}
+
+		network.DNS = strings.Split(dnslist,",")
+	}
+
+
+
 
 }
 
