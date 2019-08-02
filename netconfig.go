@@ -70,6 +70,7 @@ func (network *Network) getLinux(){
 	if err == nil {
 		network.HardwareAddress = interf.HardwareAddr
 		network.Interface = &interf
+		fmt.Println(interf)
 	}
 
 	out, err = exec.Command("/sbin/ifconfig",network.InterfaceName).Output()
