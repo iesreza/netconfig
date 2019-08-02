@@ -17,7 +17,7 @@ type Network struct {
 	InterfaceName string
 	HardwareAddress net.HardwareAddr
 	Suffix string
-	Interface net.Interface
+	Interface *net.Interface
 }
 
 // GetNetworkConfig create instance of network configuration.
@@ -40,7 +40,7 @@ func GetNetworkConfig() *Network  {
 					if strings.Contains(addr.String(), network.LocalIP.String()) {
 						network.InterfaceName = interf.Name
 						network.HardwareAddress = interf.HardwareAddr
-						network.Interface = interf
+						network.Interface = &interf
 					}
 				}
 			}
