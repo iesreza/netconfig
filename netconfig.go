@@ -40,7 +40,7 @@ func GetNetworkConfig() *Network  {
 					if strings.Contains(addr.String(), network.LocalIP.String()) {
 						network.InterfaceName = interf.Name
 						network.HardwareAddress = interf.HardwareAddr
-						network.Interface = &interf
+						//network.Interface = &interf
 					}
 				}
 			}
@@ -69,6 +69,7 @@ func (network *Network) getLinux(){
 	interf,err := net.InterfaceByName(network.InterfaceName)
 	if err == nil {
 		network.HardwareAddress = interf.HardwareAddr
+		network.Interface = &interf
 	}
 
 	out, err = exec.Command("/sbin/ifconfig",network.InterfaceName).Output()
