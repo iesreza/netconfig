@@ -1,6 +1,7 @@
 package netconfig
 
 import (
+	"fmt"
 	"log"
 	"net"
 	"os/exec"
@@ -126,6 +127,7 @@ func (network *Network) getLinux() {
 	out, err = exec.Command("arp", "-e", network.DefaultGateway.String()).Output()
 	if err == nil {
 		lines := strings.Split(string(out), "\n")
+		fmt.Println(lines)
 		if len(lines) == 2 {
 			network.DefaultGatewayHardwareAddress, _ = net.ParseMAC(strings.Fields(lines[1])[2])
 		}
