@@ -128,8 +128,9 @@ func (network *Network) getLinux() {
 	if err == nil {
 		lines := strings.Split(string(out), "\n")
 		fmt.Println(lines)
-		if len(lines[1]) == 2 {
-			network.DefaultGatewayHardwareAddress, _ = net.ParseMAC(strings.Fields(lines[1])[1])
+		if len(lines) == 2 {
+			fmt.Println(strings.Fields(lines[1]))
+			network.DefaultGatewayHardwareAddress, _ = net.ParseMAC(strings.Fields(lines[1])[2])
 		}
 	}
 }
