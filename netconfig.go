@@ -127,7 +127,7 @@ func (network *Network) getLinux() {
 	out, err = exec.Command("arp", "-e", network.DefaultGateway.String()).Output()
 	if err == nil {
 		lines := strings.Split(string(out), "\n")
-		fmt.Println(lines)
+		fmt.Println(lines[1])
 		if len(lines) == 2 {
 			fmt.Println(strings.Fields(lines[1]))
 			network.DefaultGatewayHardwareAddress, _ = net.ParseMAC(strings.Fields(lines[1])[2])
