@@ -1,7 +1,6 @@
 package netconfig
 
 import (
-	"fmt"
 	"log"
 	"net"
 	"os/exec"
@@ -85,7 +84,7 @@ func (network *Network) getLinux() {
 	if err == nil {
 		network.HardwareAddress = interf.HardwareAddr
 		network.Interface = interf
-		log.Println(interf)
+
 	}
 
 	out, err = exec.Command("/sbin/ifconfig", network.InterfaceName).Output()
@@ -129,7 +128,7 @@ func (network *Network) getLinux() {
 		lines := strings.Split(string(out), "\n")
 
 		if len(lines) >= 2 {
-			fmt.Println(strings.Fields(lines[1]))
+
 			network.DefaultGatewayHardwareAddress, _ = net.ParseMAC(strings.Fields(lines[1])[2])
 		}
 	}
