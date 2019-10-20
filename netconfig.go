@@ -10,14 +10,15 @@ import (
 
 // Network is the interface which store network configuration data
 type Network struct {
-	LocalIP         net.IP
-	DNS             []string
-	SubnetMask      net.IP
-	DefaultGateway  net.IP
-	InterfaceName   string
-	HardwareAddress net.HardwareAddr
-	Suffix          string
-	Interface       *net.Interface
+	LocalIP                       net.IP
+	DNS                           []string
+	SubnetMask                    net.IP
+	DefaultGateway                net.IP
+	DefaultGatewayHardwareAddress net.HardwareAddr
+	InterfaceName                 string
+	HardwareAddress               net.HardwareAddr
+	Suffix                        string
+	Interface                     *net.Interface
 }
 
 var instance *Network
@@ -57,6 +58,7 @@ func GetNetworkConfig() *Network {
 				}
 			}
 		}
+
 		network.getWindows()
 	} else {
 		network.getLinux()
@@ -121,7 +123,13 @@ func (network *Network) getLinux() {
 
 		network.DNS = strings.Split(dnslist, ",")
 	}
-
+	out, err = exec.Command("arp", "-e", network.DefaultGateway.String()).Output()
+	if err == nil {
+		lines := strings.Split(string(out), "\n")
+		if len(lines) == 2 {
+			network.DefaultGatewayHardwareAddress, _ = net.ParseMAC(strings.Fields(lines[1])[2])
+		}
+	}
 }
 
 // String return network information as string
@@ -133,6 +141,7 @@ func (network *Network) String() string {
 	res += "DNS:" + strings.Join(network.DNS, ",") + "\r\n"
 	res += "SubnetMask:" + network.SubnetMask.String() + "\r\n"
 	res += "DefaultGateway:" + network.DefaultGateway.String() + "\r\n"
+	res += "DefaultGatewayHardwareAddress:" + network.DefaultGatewayHardwareAddress.String() + "\r\n"
 	res += "Suffix:" + network.Suffix + "\r\n"
 
 	return res
@@ -146,14 +155,34 @@ func (network *Network) getWindows() {
 	}
 	items := strings.Split(string(out), "Ethernet adapter ")
 	for _, item := range items {
+		lines := strings.Split(item, "\r\n")
 		if strings.HasPrefix(item, network.InterfaceName) {
-			lines := strings.Split(item, "\r\n")
-			network.DefaultGateway = net.ParseIP(extractDotted(lines, "Default Gateway")[0])
+
 			network.DNS = extractDotted(lines, "DNS Servers")
 			network.Suffix = extractDotted(lines, "Connection-specific DNS Suffix")[0]
 			network.SubnetMask = net.ParseIP(extractDotted(lines, "Subnet Mask")[0])
 
 		}
+		for _, line := range lines {
+			if strings.Contains(line, "Default Gateway") {
+				parts := strings.Split(line, ":")
+				if len(parts) == 2 {
+					ip := net.ParseIP(strings.TrimSpace(parts[1]))
+					if ip != nil {
+						network.DefaultGateway = ip
+					}
+				}
+			}
+		}
+	}
+
+	out, err = exec.Command("arp", "-a", network.DefaultGateway.String()).Output()
+	if err != nil {
+		log.Fatal(err)
+	}
+	chunks := strings.Split(string(out), network.DefaultGateway.String())
+	if len(chunks) == 2 {
+		network.DefaultGatewayHardwareAddress, _ = net.ParseMAC(strings.Fields(chunks[1])[0])
 	}
 }
 
